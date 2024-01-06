@@ -1,0 +1,25 @@
+freeze_device := class(creative_device):
+
+	@editable ConditionalButton : conditional_button_device = conditional_button_device{}
+	@editable FreezeTime : float = 2.0
+
+
+	OnPlayerDamage(DamageResult : damage_result): void =
+		if:
+			Instigator := DamageResult.Instigator?
+			Agent := Instigator.GetInstigatorAgent[]
+			ConditionalButton.IsHoldingItem[Agent]
+			Target := fort_character[DamageResult.Target]
+
+		then:
+			spawn:
+				FreezePlayer(Target)
+
+	FreezePlayer(Target : fort_character)<suspends> : void =
+		Target.PutInStasis(stasis_args{})
+		Sleep(FreezeTime)
+		Target.ReleaseFromStasis()
+
+	OnBegin<override>()<suspendes> : void =
+		for (Player : GetPlayspace().GetPlayers(), FortCharacter := Player.GetFortCharacter[]):
+			FortCharacter.DamagedEvent().Subscribe(OnPlayerDamaged)
